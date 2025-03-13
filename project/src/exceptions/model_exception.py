@@ -1,0 +1,2 @@
+class MultipleInputMissColumn(Exception):
+    pass

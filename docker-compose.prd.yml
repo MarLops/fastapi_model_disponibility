@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  model_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8086:8086
+    restart: unless-stopped
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kibana.rule=Host(``)"
+      - "traefik.http.routers.kibana.tls=true"
+      - "traefik.http.routers.kibana.tls.certresolver=myresolver"
+      - "traefik.http.services.kibana.loadbalancer.server.port=8086"
+
+
+  traefik:
+    image: traefik:v2.4
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email="
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - traefik_default
+    restart: unless-stopped
+
+
+networks:
+  traefik_default:
+    external: true
